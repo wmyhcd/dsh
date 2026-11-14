@@ -1,0 +1,11 @@
+# 用法： . /root/android-build/env.sh
+export AB_HOME="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+export AB_SDK="$AB_HOME/sdk"
+export ANDROID_JAR="$AB_SDK/plat/android-34/android.jar"
+export D8_JAR="$AB_SDK/r8.jar"
+export SHIZUKU_CP="$AB_SDK/api/classes.jar:$AB_SDK/prov/classes.jar:$AB_SDK/shared/classes.jar:$AB_SDK/aidl/classes.jar"
+export AB_KS="$AB_HOME/keystore/ll.jks"
+export AB_KS_PASS="lcslcs"
+export AB_KS_ALIAS="ll"
+export AB_OUT="$AB_HOME/out"
+mkdir -p "$AB_OUT"

@@ -1,0 +1,17 @@
+name = "lcs-node"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# 免费版注意：Workers Free = 100,000 请求/天，单次 CPU 10ms
+workers_dev = true
+
+[vars]
+SITE_NAME = "LCS Node"
+# PROXY_ALLOW = "api.github.com,api.openai.com"   # 留空则全部放行
+
+# 短链用的 KV。先建再取消注释：
+#   npx wrangler kv namespace create SHORT
+# 然后把 id 填进来
+# [[kv_namespaces]]
+# binding = "SHORT"
+# id = "<NAMESPACE_ID>"

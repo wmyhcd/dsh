@@ -1,0 +1,74 @@
+# ---- 凭据 ----
+ai-config-backup.json
+.env
+.env.*
+*.pem
+*.key
+*.jks
+*.keystore
+
+# ---- 二进制产物 ----
+*.apk
+*.apks
+*.xapk
+*.aab
+*.dex
+*.jar
+*.aar
+*.so
+*.dylib
+*.dll
+*.exe
+*.ttf
+*.ttc
+*.otf
+*.woff
+*.woff2
+*.zip
+*.7z
+*.tar
+*.gz
+*.rar
+
+# ---- 媒体 ----
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.ico
+*.mp4
+*.mp3
+*.wav
+
+# ---- 提取/临时目录 ----
+apk_analysis/
+apk-analysis/
+apktool_work/
+mt-work/
+mt-analysis/x/
+tmp/
+backup/
+data/
+lumo/
+brotato-save-backup/
+.cache/
+.wrangler/
+node_modules/
+
+# ---- 系统杂项 ----
+.screen-timeout-orig
+.video_guard_seen
+.DS_Store
+Thumbs.db
+
+# ---- 杂项 ----
+*.xml
+*.log
+*.bak
+
+# ---- Python ----
+__pycache__/
+*.pyc
+*.pyo
