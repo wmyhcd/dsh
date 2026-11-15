@@ -21,7 +21,7 @@
     "dsh-unlag": "^1.11.0",
     "dsh-whale-widget": "^0.4.2",
     "@tencent-connect/dsh-qqbot": "^0.5.2",
-    "@xmanrui/dsh-im": "^5.9.1"
+    "@xmanrui/dsh-im": "file:./dsh-plugins/xmanrui-dsh-im-5.9.1.tgz"
   },
   "dsh": {
     "profile": {

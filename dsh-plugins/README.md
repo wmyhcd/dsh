@@ -67,6 +67,7 @@ dsh plugin --profile web install
 | `dsh-tool-workspace` | 0.5.15 | 工作区注册管理：list / get / current / create / rename / delete |
 | `dsh-link` | 1.2.3 | 把另一台设备的 DSH 变成本机 agent 能指挥的对端（电脑 ↔ 手机互连） |
 | `dsh-import-newapi` | 0.1.3 | New API 连接信息一键导成 `llm-pi-ai` provider，密钥写进 `.credentials.yaml` |
+| `@xmanrui/dsh-im` | 5.9.1 | 把微信 / 飞书 / 企微 / 钉钉 / QQ / Telegram / WhatsApp / Slack / Discord / Matrix 接入 DSH（11 MB，含各平台适配器） |
 
 ## npm 上的（脚本会自动拉）
 
@@ -82,7 +83,7 @@ dsh plugin --profile web install
 | 文件 | 依赖 | 加载项 | 说明 |
 |---|---|---|---|
 | `profile-template.json` | 18 | 20 | **默认**。去掉 4 个手机专用，去掉 2 个要账号凭据的 |
-| `profile-template-full.json` | 20 | 22 | 比精简版多 `@tencent-connect/dsh-qqbot` 和 `@xmanrui/dsh-im` |
+| `profile-template-full.json` | 20 | 22 | 比精简版多 `@tencent-connect/dsh-qqbot` 和 `@xmanrui/dsh-im`（后者已打包为本地 tgz） |
 
 用全量版：
 
