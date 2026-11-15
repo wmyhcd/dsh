@@ -15,6 +15,7 @@ dsh plugin --profile web add ./dsh-lexicon-shield-4.0.0.tgz
 dsh plugin --profile web add ./dsh-thinking-1.0.1.tgz
 dsh plugin --profile web add ./dsh-tool-workspace-0.5.15.tgz
 dsh plugin --profile web add ./dsh-link-1.2.3.tgz
+dsh plugin --profile web add ./dsh-import-newapi-0.1.3.tgz
 ```
 
 装完 `dsh web` 启动（或重启）才生效。
@@ -29,6 +30,7 @@ dsh plugin --profile web add ./dsh-link-1.2.3.tgz
 | `dsh-thinking` | 1.0.1 | 思考链治理：探明运行时可挂的钩子、剥离思考链、只读占用统计 |
 | `dsh-tool-workspace` | 0.5.15 | 工作区注册管理：list/get/current/create/rename/delete |
 | `dsh-link` | 1.2.3 | 把另一台设备的 DSH 变成本机 agent 能指挥的对端（电脑 ↔ 手机互连） |
+| `dsh-import-newapi` | 0.1.3 | 把 New API 的连接信息一键导成 `llm-pi-ai` provider，apiKey 直接写进 `.credentials.yaml` |
 
 ## 别装这些（手机专用）
 
@@ -45,7 +47,6 @@ dsh plugin --profile web add ./dsh-link-1.2.3.tgz
 
 ```bash
 dsh plugin --profile web add dsh-free-search
-dsh plugin --profile web add dsh-import-newapi
 dsh plugin --profile web add dsh-live2dwaifu
 dsh plugin --profile web add dsh-llm-discovery
 dsh plugin --profile web add dsh-persona-dafeiyu
@@ -59,6 +60,16 @@ dsh plugin --profile web add @michengai/dsh-archive-manager
 ```
 
 `dsh-persona-dafeiyu` 就是「大肥鱼 / 阿茶 / 听澜」那一套人设，装完在设置里选。
+
+## New API 导入怎么用
+
+装好 `dsh-import-newapi` 后重启 dsh web，在设置里找到导入入口，粘贴 New API 站点给你的连接串（形如 `https://站点/v1` + `sk-...`），它会：
+
+1. 自动探测该端点支持的模型列表；
+2. 在 `cordis.patch.yml` 里写一个 `llm-pi-ai` provider 条目；
+3. 把密钥存进 `$DSH_HOME/.credentials.yaml`，**不落到 patch 文件里**。
+
+手机这份 profile 里就是这个插件建的两个 provider（`hachimi-music-icu` / `hachimi-music-icuai`），密钥走的是环境变量 `HACHIMI_MUSIC_ICU_API_KEY`。
 
 ## 注意
 
