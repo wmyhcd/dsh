@@ -1,0 +1,50 @@
+{
+  "name": "dsh-profile-web",
+  "private": true,
+  "dependencies": {
+    "@dfy-plugins/dsh-bundle": "^0.1.3",
+    "@dfy-plugins/dsh-image-generation": "^0.1.4",
+    "@furongjun1999/dsh-memory": "^0.9.14",
+    "@michengai/dsh-archive-manager": "^1.1.16",
+    "dsh-free-search": "^0.9.11",
+    "dsh-import-newapi": "file:./dsh-plugins/dsh-import-newapi-0.1.3.tgz",
+    "dsh-lexicon-shield": "file:./dsh-plugins/dsh-lexicon-shield-4.0.0.tgz",
+    "dsh-link": "file:./dsh-plugins/dsh-link-1.2.3.tgz",
+    "dsh-live2dwaifu": "^2.3.0",
+    "dsh-llm-discovery": "^0.2.1",
+    "dsh-persona-dafeiyu": "^0.6.0",
+    "dsh-public-access": "^1.3.0",
+    "dsh-purge": "file:./dsh-plugins/dsh-purge-1.1.71.tgz",
+    "dsh-rules": "file:./dsh-plugins/dsh-rules-0.1.0.tgz",
+    "dsh-thinking": "file:./dsh-plugins/dsh-thinking-1.0.1.tgz",
+    "dsh-tool-workspace": "file:./dsh-plugins/dsh-tool-workspace-0.5.15.tgz",
+    "dsh-unlag": "^1.11.0",
+    "dsh-whale-widget": "^0.4.2"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-link",
+        "dsh-thinking",
+        "dsh-purge",
+        "dsh-free-search",
+        "dsh-tool-workspace",
+        "dsh-whale-widget",
+        "dsh-lexicon-shield",
+        "@michengai/dsh-archive-manager",
+        "@dfy-plugins/dsh-bundle",
+        "@dfy-plugins/dsh-image-generation",
+        "dsh-persona-dafeiyu",
+        "@furongjun1999/dsh-memory",
+        "dsh-import-newapi",
+        "dsh-llm-discovery",
+        "dsh-rules",
+        "dsh-public-access",
+        "dsh-unlag",
+        "dsh-live2dwaifu"
+      ]
+    }
+  }
+}

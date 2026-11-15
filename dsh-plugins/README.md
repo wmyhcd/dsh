@@ -1,36 +1,80 @@
 # DSH 插件备份（从手机迁移到电脑）
 
-手机 `web` profile 里装的插件，**能搬到电脑的都在这**。`dsh` 版本 `0.2.0-rc.2`。
+手机 `web` profile 的插件集合，能搬到电脑的都在这。`dsh` 版本 `0.2.0-rc.2`。
 
-## 装法
+## ⚠️ 先看这个：装了插件却看不到，是因为少做了一层
 
-电脑上装好 dsh 后：
+DSH 有**两层**配置，只做第一层等于白装：
+
+| 层 | 在哪 | 作用 |
+|---|---|---|
+| `dependencies` | `profiles/<name>/package.json` | 把包下载进 `node_modules`。**仅此而已** |
+| `dsh.profile.bundles` | 同一个 `package.json` 的 `dsh` 字段 | **决定它加不加载** |
+
+每个插件包里都自带一个 `cordis.patch.yml`，内容是：
+
+```yaml
+- insert:
+    - id: thinking
+      name: dsh-thinking
+```
+
+这个文件**只有在插件被列进 `bundles` 时**，才会作为一层 patch 叠加到 profile 树上。没进 bundles → 包躺在 `node_modules` 里，patch 永远不参与组合 → 插件不生效，界面上什么也看不到。
+
+所以 `dsh plugin add xxx` 之后发现"没反应"，先去看 `dsh.profile.bundles` 里有没有它。
+
+## 一键安装
 
 ```bash
 git clone https://github.com/wmyhcd/dsh.git
 cd dsh/dsh-plugins
-dsh plugin --profile web add ./dsh-purge-1.1.71.tgz
-dsh plugin --profile web add ./dsh-rules-0.1.0.tgz
-dsh plugin --profile web add ./dsh-lexicon-shield-4.0.0.tgz
-dsh plugin --profile web add ./dsh-thinking-1.0.1.tgz
-dsh plugin --profile web add ./dsh-tool-workspace-0.5.15.tgz
-dsh plugin --profile web add ./dsh-link-1.2.3.tgz
-dsh plugin --profile web add ./dsh-import-newapi-0.1.3.tgz
+
+# Linux / macOS / WSL
+bash install.sh
+
+# Windows PowerShell
+powershell -ExecutionPolicy Bypass -File install.ps1
 ```
 
-装完 `dsh web` 启动（或重启）才生效。
+脚本做三件事：把 `.tgz` 拷进 `profiles/<name>/dsh-plugins/`、合并 `package.json` 的 `dependencies` 和 `bundles`（原文件自动备份）、跑 `dsh plugin install`。
+
+装完重启 `dsh web`。
+
+## 手动安装
+
+```bash
+# 1. 拷包（路径必须相对 profile 目录，因为模板里写的是 file:./dsh-plugins/xxx.tgz）
+mkdir -p ~/.dsh/profiles/web/dsh-plugins
+cp *.tgz ~/.dsh/profiles/web/dsh-plugins/
+
+# 2. 合并 package.json
+node merge-profile.mjs web
+
+# 3. 装依赖
+dsh plugin --profile web install
+```
+
+`merge-profile.mjs` 只做加法和覆盖，不动你已有的其他字段，改之前会备份成 `package.json.bak-<时间戳>`。
 
 ## 包清单
 
 | 包 | 版本 | 作用 |
 |---|---|---|
-| `dsh-purge` | 1.1.71 | 破甲：让模型不被系统提示框住，可按模型换不同提示层 |
-| `dsh-rules` | 0.1.0 | 自定义规则库：单文件规则、双段注入（最前 + 最后） |
-| `dsh-lexicon-shield` | 4.0.0 | 输入侧代号护盾：用户消息进会话前把词表里的词换成代号，JSON 热加载 |
-| `dsh-thinking` | 1.0.1 | 思考链治理：探明运行时可挂的钩子、剥离思考链、只读占用统计 |
-| `dsh-tool-workspace` | 0.5.15 | 工作区注册管理：list/get/current/create/rename/delete |
+| `dsh-purge` | 1.1.71 | 破甲：模型不受系统提示框住，可按模型换不同提示层 |
+| `dsh-rules` | 0.1.0 | 规则库：单文件规则，双段注入（最前 + 最后） |
+| `dsh-lexicon-shield` | 4.0.0 | 代号护盾：用户消息进会话前按词表把词换成代号，JSON 热加载 |
+| `dsh-thinking` | 1.0.1 | 思考链治理：探明可挂钩子、剥离思考链、只读占用统计 |
+| `dsh-tool-workspace` | 0.5.15 | 工作区注册管理：list / get / current / create / rename / delete |
 | `dsh-link` | 1.2.3 | 把另一台设备的 DSH 变成本机 agent 能指挥的对端（电脑 ↔ 手机互连） |
-| `dsh-import-newapi` | 0.1.3 | 把 New API 的连接信息一键导成 `llm-pi-ai` provider，apiKey 直接写进 `.credentials.yaml` |
+| `dsh-import-newapi` | 0.1.3 | New API 连接信息一键导成 `llm-pi-ai` provider，密钥写进 `.credentials.yaml` |
+
+## npm 上的（脚本会自动拉）
+
+`profile-template.json` 里已经写好了这些，`dsh plugin install` 时会从 registry 下载：
+
+`dsh-free-search` · `dsh-live2dwaifu` · `dsh-llm-discovery` · `dsh-persona-dafeiyu` · `dsh-public-access` · `dsh-unlag` · `dsh-whale-widget` · `@dfy-plugins/dsh-bundle` · `@dfy-plugins/dsh-image-generation` · `@furongjun1999/dsh-memory` · `@michengai/dsh-archive-manager`
+
+`dsh-persona-dafeiyu` 就是「大肥鱼 / 阿茶 / 听澜」那套人设，装完在设置里选。
 
 ## 别装这些（手机专用）
 
@@ -41,38 +85,30 @@ dsh plugin --profile web add ./dsh-import-newapi-0.1.3.tgz
 | `dsh-phone-files` | 浏览 `/sdcard`，电脑上没有 |
 | `dsh-vscreen` | 安卓虚拟屏，需要 Shizuku |
 
-## npm 上有的，不用拷
+模板里已经把这四个排除了。
 
-这些版本号是 semver，电脑上直接 `add` 包名即可拉最新：
-
-```bash
-dsh plugin --profile web add dsh-free-search
-dsh plugin --profile web add dsh-live2dwaifu
-dsh plugin --profile web add dsh-llm-discovery
-dsh plugin --profile web add dsh-persona-dafeiyu
-dsh plugin --profile web add dsh-public-access
-dsh plugin --profile web add dsh-unlag
-dsh plugin --profile web add dsh-whale-widget
-dsh plugin --profile web add @dfy-plugins/dsh-bundle
-dsh plugin --profile web add @dfy-plugins/dsh-image-generation
-dsh plugin --profile web add @furongjun1999/dsh-memory
-dsh plugin --profile web add @michengai/dsh-archive-manager
-```
-
-`dsh-persona-dafeiyu` 就是「大肥鱼 / 阿茶 / 听澜」那一套人设，装完在设置里选。
+手机那份 profile 里还有两个可选的：`@tencent-connect/dsh-qqbot`（QQ 机器人）、`@xmanrui/dsh-im`（IM 客户端）。它们要额外配账号凭据，需要再手动加。
 
 ## New API 导入怎么用
 
-装好 `dsh-import-newapi` 后重启 dsh web，在设置里找到导入入口，粘贴 New API 站点给你的连接串（形如 `https://站点/v1` + `sk-...`），它会：
+装好 `dsh-import-newapi` 后重启，在设置里找到导入入口，粘贴站点地址（`https://站点/v1`）和 `sk-...` 密钥，它会：
 
 1. 自动探测该端点支持的模型列表；
-2. 在 `cordis.patch.yml` 里写一个 `llm-pi-ai` provider 条目；
-3. 把密钥存进 `$DSH_HOME/.credentials.yaml`，**不落到 patch 文件里**。
+2. 在 patch 里写一个 `llm-pi-ai` provider 条目；
+3. 把密钥存进 `$DSH_HOME/.credentials.yaml`，**不落到 patch 文件里**（patch 要进 git，密钥进去就漏了）。
 
-手机这份 profile 里就是这个插件建的两个 provider（`hachimi-music-icu` / `hachimi-music-icuai`），密钥走的是环境变量 `HACHIMI_MUSIC_ICU_API_KEY`。
+## 排查
+
+| 现象 | 查什么 |
+|---|---|
+| 装了但界面没有 | `bundles` 里有没有它（本文开头那节） |
+| 提示找不到模块 | `dsh plugin --profile web install` 有没有成功跑完 |
+| 插件在但功能关闭 | `profiles/<name>/cordis.patch.yml` 里有没有 `disabled: true` |
+| id 不匹配 | 插件 `cordis.patch.yml` 里的 `id` 必须和它 `index.js` 里 export 的 `name` 一致，不一致会静默失效 |
+| 改了不生效 | 重启 `dsh web`，热重载不一定覆盖 patch 层 |
 
 ## 注意
 
-包里的默认配置是从手机这份 profile 导出的，**含我自己调的东西**（破甲提示词、规则内容、词表）。换机器时按需清空或重调。
+包里的默认配置是从手机这份 profile 导出的，**含我自己调过的东西**（破甲提示词、规则内容、词表）。换机器时按需清空或重调。
 
 `dsh-purge` 的 `client.js` 有 2 MB，是打包产物，属正常。
