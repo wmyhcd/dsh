@@ -2,6 +2,7 @@
 # DSH 插件一次性安装（Linux / macOS / WSL）
 set -e
 PROFILE="${1:-web}"
+TEMPLATE="${2:-profile-template.json}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 DSH_HOME="${DSH_HOME:-$HOME/.dsh}"
 PDIR="$DSH_HOME/profiles/$PROFILE"
@@ -10,12 +11,13 @@ command -v dsh >/dev/null 2>&1 || { echo "PATH 里没有 dsh，先确认 dsh 装
 [ -f "$PDIR/package.json" ] || { echo "找不到 $PDIR/package.json，先跑一次 dsh $PROFILE"; exit 1; }
 
 echo ">>> profile: $PDIR"
+echo ">>> 模板: $TEMPLATE"
 mkdir -p "$PDIR/dsh-plugins"
 cp -f "$HERE"/*.tgz "$PDIR/dsh-plugins/"
 echo ">>> 插件包已拷入 $PDIR/dsh-plugins/"
 
 echo ">>> 合并 package.json（dependencies + bundles）"
-node "$HERE/merge-profile.mjs" "$PROFILE"
+node "$HERE/merge-profile.mjs" "$PROFILE" "$TEMPLATE"
 
 echo ">>> 安装依赖"
 dsh plugin --profile "$PROFILE" install

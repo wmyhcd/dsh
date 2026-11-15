@@ -76,6 +76,30 @@ dsh plugin --profile web install
 
 `dsh-persona-dafeiyu` 就是「大肥鱼 / 阿茶 / 听澜」那套人设，装完在设置里选。
 
+
+## 两个模板：精简版 / 全量版
+
+| 文件 | 依赖 | 加载项 | 说明 |
+|---|---|---|---|
+| `profile-template.json` | 18 | 20 | **默认**。去掉 4 个手机专用，去掉 2 个要账号凭据的 |
+| `profile-template-full.json` | 20 | 22 | 比精简版多 `@tencent-connect/dsh-qqbot` 和 `@xmanruri/dsh-im` |
+
+用全量版：
+
+```bash
+bash install.sh web profile-template-full.json
+
+powershell -ExecutionPolicy Bypass -File install.ps1 -Template profile-template-full.json
+```
+
+`qqbot` 要 QQ 开放平台的应用凭据，`dsh-im` 要 IM 服务端地址，没配好之前它们不会工作，但不影响其他插件。
+
+### 手机那份有 24 个依赖，为什么这里最多 20
+
+差的 4 个是 `dsh-android-env` / `dsh-phone` / `dsh-phone-files` / `dsh-vscreen`——全部依赖安卓的无障碍服务和 Shizuku，电脑上没有对应能力，装上只会让模型误判环境。
+
+另外 `@dfy-plugins` 下有 11 个包，其中只有 `dsh-bundle` 和 `dsh-image-generation` 是直接依赖，剩下 9 个（appearance / codex-bridge / media-blocks / turn-guard / visualize / wallpaper / image-protocol / resource-core / archive-manager）是 `dsh-bundle` 的传递依赖，装它会自动带上，不用单独列。
+
 ## 别装这些（手机专用）
 
 | 包 | 为什么 |

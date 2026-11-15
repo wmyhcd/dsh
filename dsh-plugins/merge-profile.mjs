@@ -10,7 +10,8 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const profile = process.argv[2] || 'web';
 const dshHome = process.env.DSH_HOME || path.join(os.homedir(), '.dsh');
 const target = path.join(dshHome, 'profiles', profile, 'package.json');
-const tmplPath = path.join(HERE, 'profile-template.json');
+const tmplName = process.argv[3] || 'profile-template.json';
+const tmplPath = path.join(HERE, tmplName);
 
 if (!fs.existsSync(target)) {
   console.error(`找不到 profile: ${target}`);
