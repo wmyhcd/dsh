@@ -82,7 +82,7 @@ dsh plugin --profile web install
 | 文件 | 依赖 | 加载项 | 说明 |
 |---|---|---|---|
 | `profile-template.json` | 18 | 20 | **默认**。去掉 4 个手机专用，去掉 2 个要账号凭据的 |
-| `profile-template-full.json` | 20 | 22 | 比精简版多 `@tencent-connect/dsh-qqbot` 和 `@xmanruri/dsh-im` |
+| `profile-template-full.json` | 20 | 22 | 比精简版多 `@tencent-connect/dsh-qqbot` 和 `@xmanrui/dsh-im` |
 
 用全量版：
 
