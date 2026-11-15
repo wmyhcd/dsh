@@ -72,3 +72,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.pyo
+
+# ---- 空占位 ----
+mt-analysis/classes.txt
+mt-analysis/err.txt
