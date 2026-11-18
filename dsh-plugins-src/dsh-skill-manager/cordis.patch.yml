@@ -1,0 +1,4 @@
+# dsh-skill-manager bundle patch — 设置里的 skill 管理面板。
+- insert:
+    - id: skill-manager
+      name: 'dsh-skill-manager'

@@ -19,7 +19,8 @@
     "dsh-thinking": "file:./dsh-plugins/dsh-thinking-1.0.1.tgz",
     "dsh-tool-workspace": "file:./dsh-plugins/dsh-tool-workspace-0.5.15.tgz",
     "dsh-unlag": "^1.11.0",
-    "dsh-whale-widget": "^0.4.2"
+    "dsh-whale-widget": "^0.4.2",
+    "dsh-skill-manager": "file:./dsh-plugins/dsh-skill-manager-1.0.0.tgz"
   },
   "dsh": {
     "profile": {
@@ -43,7 +44,8 @@
         "dsh-rules",
         "dsh-public-access",
         "dsh-unlag",
-        "dsh-live2dwaifu"
+        "dsh-live2dwaifu",
+        "dsh-skill-manager"
       ]
     }
   }
