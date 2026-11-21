@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Session sync",
+    "description": "Rebind every open session to the current plugin configuration and agent preset revision with one sidebar button.",
+    "detail": "docs/DETAIL.md"
+  }
+}

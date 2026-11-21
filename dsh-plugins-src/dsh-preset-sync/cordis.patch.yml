@@ -1,0 +1,6 @@
+- insert:
+    - id: preset-sync
+      name: 'dsh-preset-sync'
+      config:
+        skipRunning: true
+        settleMs: 1200

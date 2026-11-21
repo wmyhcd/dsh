@@ -20,7 +20,8 @@
     "dsh-tool-workspace": "file:./dsh-plugins/dsh-tool-workspace-0.5.15.tgz",
     "dsh-unlag": "^1.11.0",
     "dsh-whale-widget": "^0.4.2",
-    "dsh-skill-manager": "file:./dsh-plugins/dsh-skill-manager-1.0.0.tgz"
+    "dsh-skill-manager": "file:./dsh-plugins/dsh-skill-manager-1.0.0.tgz",
+    "dsh-preset-sync": "file:./dsh-plugins/dsh-preset-sync-1.0.0.tgz"
   },
   "dsh": {
     "profile": {
@@ -45,7 +46,8 @@
         "dsh-public-access",
         "dsh-unlag",
         "dsh-live2dwaifu",
-        "dsh-skill-manager"
+        "dsh-skill-manager",
+        "dsh-preset-sync"
       ]
     }
   }
