@@ -63,9 +63,28 @@ window.__ModuleLoader__.load({
 
     /** State of one session row: running → no agent → ready. */
     function rowState(row) {
-      if (row.live === false) return { color: MUTED, label: '未打开', hint: '打开即用最新配置' }
-      if (row.running) return { color: WARN, label: '运行中', hint: '会跳过，等空闲再同步' }
-      return { color: OK, label: '空闲', hint: '可同步' }
+      if (row.live === false) {
+        return { color: MUTED, label: '未打开', hint: '没有活跃 Agent，打开时会自动装配最新配置，无需同步', dim: true }
+      }
+      if (row.running) return { color: WARN, label: '运行中', hint: '正在跑回合，会被跳过；等空闲再同步', dim: false }
+      return { color: OK, label: '空闲', hint: '可以同步', dim: false }
+    }
+
+    /** One-line explanation of what a run actually did, per skip reason. */
+    function describeReport(value) {
+      const results = Array.isArray(value?.results) ? value.results : []
+      const count = (predicate) => results.filter(predicate).length
+      const parts = []
+      if (Number(value?.synced) > 0) parts.push(`已同步 ${value.synced} 个`)
+      const noAgent = count((row) => row.outcome === 'skipped' && row.reason === 'no-agent')
+      const running = count((row) => row.outcome === 'skipped' && row.reason === 'running')
+      const noPreset = count((row) => row.outcome === 'skipped' && row.reason === 'no-preset')
+      if (noAgent > 0) parts.push(`${noAgent} 个未打开（本来就不需要同步）`)
+      if (running > 0) parts.push(`${running} 个正在跑（已跳过）`)
+      if (noPreset > 0) parts.push(`${noPreset} 个没有预设`)
+      if (Number(value?.failed) > 0) parts.push(`${value.failed} 个失败`)
+      if (parts.length === 0) return '没有需要同步的会话：当前没有等待中的闲置会话。'
+      return parts.join('，') + '。'
     }
 
     function SyncPanel({ connection }) {
@@ -105,10 +124,7 @@ window.__ModuleLoader__.load({
         try {
           const value = unwrap(await callRpc(connection, 'sync.run', {}))
           setReport(value)
-          const failed = Number(value?.failed ?? 0)
-          setMessage(failed > 0
-            ? `已同步 ${value.synced} 个，${failed} 个失败（见下方明细）。`
-            : `已同步 ${value.synced} 个，跳过 ${value.skipped} 个。`)
+          setMessage(describeReport(value))
           await load()
         } catch (error) {
           setMessage(String(error?.message ?? error))
@@ -124,10 +140,12 @@ window.__ModuleLoader__.load({
         const state = rowState(row)
         return h('li', {
           key: row.sessionId,
+          title: state.hint,
           style: {
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '7px 10px', borderTop: `1px solid ${BORDER}`,
             font: 'inherit', fontSize: 12,
+            opacity: state.dim ? 0.62 : 1,
           },
         },
           dot(state.color),
@@ -135,7 +153,6 @@ window.__ModuleLoader__.load({
           h('span', { style: { color: row.preset === null ? MUTED : 'inherit', fontSize: 11, whiteSpace: 'nowrap' } },
             row.preset === null ? '无预设' : row.preset),
           h('span', {
-            title: state.hint,
             style: { color: state.color, fontSize: 11, minWidth: 46, textAlign: 'right', whiteSpace: 'nowrap' },
           }, state.label))
       })
