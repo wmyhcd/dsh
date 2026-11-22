@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "侧边栏一键把已打开的会话重新装配到最新的插件配置和 agent 预设。",
   "type": "module",
-  "main": "lib/index.js",
+  "main": "lib/host.js",
   "exports": {
     ".": {
-      "default": "./lib/index.js"
+      "default": "./lib/host.js"
     },
     "./client": {
       "default": "./lib/client.js"

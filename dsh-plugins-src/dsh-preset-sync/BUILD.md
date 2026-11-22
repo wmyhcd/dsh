@@ -66,8 +66,8 @@ node test/dryrun.mjs
 - `package.json` 的 `exports["./client"]` 能解析到真实文件 `lib/client.js`
 - `lib/client.js` 以 `window.__ModuleLoader__.load({ id: "dsh-preset-sync", factory })` 开头
 - `dsh.client.inject` 里含槽位声明方：`dsh-client-ui-layout`（`main`）与 `dsh-client-ui-sidebar`（`sidebar.panellist`）
-- `lib/index.js` 导出 `apply` 和 `inject = ['connection']`
-- `cordis.patch.yml` 的 `id` 与 `lib/index.js` 导出的 `name` 语义一致（这里是 `preset-sync` / `name: 'dsh-preset-sync'`）
+- `lib/host.js` 导出 `apply` 和 `inject = ['connection']`
+- `cordis.patch.yml` 的 `id` 与 `lib/host.js` 导出的 `name` 语义一致（这里是 `preset-sync` / `name: 'dsh-preset-sync'`）
 
 ## 已知注意
 

@@ -27,11 +27,29 @@ function abortSignal(signal) {
 }
 
 /**
+ * Sessions the user archived. `sessionController.list()` deliberately keeps
+ * them (they still exist and can be unarchived), so the panel has to drop them
+ * itself, otherwise an archived session never leaves the list.
+ */
+function archivedSessionIds(ctx) {
+  const registry = ctx.get('workspaceRegistry')
+  if (registry === undefined) return null
+  try {
+    const ids = registry.archivedSessionIds
+    return ids === undefined || ids === null ? null : new Set(Array.from(ids, String))
+  } catch (error) {
+    ctx.logger?.warn?.(`preset-sync: archivedSessionIds unavailable: ${String(error?.message ?? error)}`)
+    return null
+  }
+}
+
+/**
  * Read every ordinary session with live-Agent availability.
  * Falls back to the live Agent registry when the controller is unavailable or
  * refuses the read, so the panel still shows something useful.
  */
 async function readSessions(ctx, signal) {
+  const archived = archivedSessionIds(ctx)
   const controller = ctx.get('sessionController')
   if (controller !== undefined && typeof controller.list === 'function') {
     try {
@@ -40,15 +58,17 @@ async function readSessions(ctx, signal) {
       for (const item of value?.items ?? []) {
         // Subagents are not user sessions; rebinding them is the parent's job.
         if (item.origin === 'subagent' || item.parentSessionId !== undefined) continue
+        const sessionId = String(item.sessionId)
+        if (archived !== null && archived.has(sessionId)) continue
         rows.push({
-          sessionId: String(item.sessionId),
+          sessionId,
           running: item.running === true,
           blank: item.blank === true,
           live: item.agentAvailable === true,
           updatedAt: typeof item.updatedAt === 'number' ? item.updatedAt : null,
         })
       }
-      return { source: 'sessionController', rows }
+      return { source: 'sessionController', rows, archivedFiltered: archived !== null }
     } catch (error) {
       ctx.logger?.warn?.(`preset-sync: sessionController.list() failed, falling back to live agents: ${String(error?.message ?? error)}`)
     }
@@ -57,13 +77,16 @@ async function readSessions(ctx, signal) {
   const live = agents !== undefined && typeof agents.list === 'function' ? agents.list() : []
   return {
     source: 'agents',
-    rows: live.map((agent) => ({
-      sessionId: String(agent.id),
-      running: agent.status === 'running',
-      blank: false,
-      live: true,
-      updatedAt: null,
-    })),
+    rows: live
+      .filter((agent) => archived === null || !archived.has(String(agent.id)))
+      .map((agent) => ({
+        sessionId: String(agent.id),
+        running: agent.status === 'running',
+        blank: false,
+        live: true,
+        updatedAt: null,
+      })),
+    archivedFiltered: archived !== null,
   }
 }
 
@@ -135,7 +158,7 @@ function createService(ctx, config) {
   async function preview(signal) {
     const presets = ctx.get('agentPresets')
     if (presets === undefined) throw new Error('这个 profile 没有装配 agent 预设注册表。')
-    const { source, rows } = await readSessions(ctx, signal)
+    const { source, rows, archivedFiltered } = await readSessions(ctx, signal)
     const agents = ctx.get('agents')
     const sessions = rows.map((row) => {
       const agent = row.live ? agents?.get?.(row.sessionId) : undefined
@@ -152,8 +175,8 @@ function createService(ctx, config) {
       }
     })
     const live = sessions.filter((row) => row.live).length
-    ctx.logger?.info?.(`preset-sync: preview source=${source} sessions=${sessions.length} live=${live}`)
-    return { source, sessions, skipRunning }
+    ctx.logger?.info?.(`preset-sync: preview source=${source} sessions=${sessions.length} live=${live} archivedFilter=${archivedFiltered}`)
+    return { source, sessions, skipRunning, archivedFiltered }
   }
 
   async function run(payload, signal) {

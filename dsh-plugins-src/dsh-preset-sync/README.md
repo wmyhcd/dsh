@@ -103,7 +103,7 @@ node test/dryrun.mjs
 
 ```
 .
-├─ index.js           # Host 半：路由 + recompose 逻辑
+├─ lib/host.js        # Host 半：路由 + recompose 逻辑
 ├─ client.js          # Client 半：侧边栏入口 + 面板
 ├─ cordis.patch.yml   # bundle 补丁（注册插件行）
 ├─ package.json

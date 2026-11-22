@@ -20,13 +20,14 @@ const agentOf = {
   s2: { id: 's2', status: 'running', session: { sid: 's2' }, ctx: { tag: '2' } },
   s4: { id: 's4', status: 'idle', session: { sid: 's4' }, ctx: { tag: '4' } },
 }
-// s3 has no Agent at all (blank / never opened); s5 is a subagent session.
+// s3 is archived, s5 is a subagent session, s6 is new and has no Agent yet.
 const sessionRows = [
-  { sessionId: 's1', agentAvailable: true, running: false, blank: false, updatedAt: 3 },
-  { sessionId: 's2', agentAvailable: true, running: true, blank: false, updatedAt: 2 },
-  { sessionId: 's3', agentAvailable: false, running: false, blank: true, updatedAt: 1 },
-  { sessionId: 's4', agentAvailable: true, running: false, blank: false, updatedAt: 0 },
-  { sessionId: 's5', agentAvailable: true, running: false, blank: false, origin: 'subagent', updatedAt: 0 },
+  { sessionId: 's1', agentAvailable: true, running: false, blank: false, updatedAt: 5 },
+  { sessionId: 's2', agentAvailable: true, running: true, blank: false, updatedAt: 4 },
+  { sessionId: 's3', agentAvailable: false, running: false, blank: true, updatedAt: 3 },
+  { sessionId: 's4', agentAvailable: true, running: false, blank: false, updatedAt: 2 },
+  { sessionId: 's5', agentAvailable: true, running: false, blank: false, origin: 'subagent', updatedAt: 1 },
+  { sessionId: 's6', agentAvailable: false, running: false, blank: true, updatedAt: 0 },
 ]
 const presets = {
   presetForSession: (session) => (session.sid === 's4' ? null : 'standard'),
@@ -39,13 +40,17 @@ const presets = {
 
 let route
 const registeredTools = []
-function makeCtx({ controller = { list: async () => ({ items: sessionRows }) } } = {}) {
+function makeCtx({ controller = { list: async () => ({ items: sessionRows }) }, archived = ['s3'] } = {}) {
   return {
     get(name) {
       if (name === 'connection') {
         return { fetch: { register(value) { route = value; return () => { route = undefined } } } }
       }
       if (name === 'sessionController') return controller
+      if (name === 'workspaceRegistry') {
+        if (archived === null) return undefined
+        return { get archivedSessionIds() { return archived } }
+      }
       if (name === 'agents') {
         return { list: () => Object.values(agentOf), get: (id) => agentOf[id] }
       }
@@ -72,7 +77,7 @@ const envelope = (method, payload) => ({
 })
 
 // ------------------------------------------------------------- Host: reads
-const host = await import(specifier('lib/index.js'))
+const host = await import(specifier('lib/host.js'))
 assert.equal(typeof host.apply, 'function', 'host exports apply')
 assert.deepEqual(host.inject, ['connection'], 'host declares connection')
 
@@ -84,13 +89,14 @@ assert.deepEqual(route.methods, ['POST'])
 const preview = await (await route.fetch(request(envelope('sync.preview', {})))).json()
 assert.equal(preview.result.ok, true, 'preview ok')
 assert.equal(preview.result.value.source, 'sessionController', 'reads the session controller first')
+assert.equal(preview.result.value.archivedFiltered, true, 'reports that the archive filter was applied')
 const listed = preview.result.value.sessions
-assert.deepEqual(listed.map((row) => row.sessionId), ['s1', 's2', 's3', 's4'],
-  'lists every ordinary session including one with no Agent, and drops the subagent')
-assert.deepEqual(listed.map((row) => [row.sessionId, row.live]), [['s1', true], ['s2', true], ['s3', false], ['s4', true]],
+assert.deepEqual(listed.map((row) => row.sessionId), ['s1', 's2', 's4', 's6'],
+  'drops the archived session and the subagent, keeps the never-opened one')
+assert.deepEqual(listed.map((row) => [row.sessionId, row.live]), [['s1', true], ['s2', true], ['s4', true], ['s6', false]],
   'reports live-Agent availability per session')
-assert.equal(listed[2].preset, null, 'a session with no Agent carries no preset')
-assert.equal(listed[3].preset, null, 'a preset-free Agent reports no preset')
+assert.equal(listed[2].preset, null, 'a preset-free Agent reports no preset')
+assert.equal(listed[3].preset, null, 'a never-opened session reports no preset')
 
 // ------------------------------------------------------------- Host: write
 const run = await (await route.fetch(request(envelope('sync.run', {})))).json()
@@ -101,13 +107,13 @@ assert.equal(run.result.value.failed, 0)
 assert.deepEqual(run.result.value.results.map((row) => [row.sessionId, row.outcome, row.reason ?? null]), [
   ['s1', 'synced', null],
   ['s2', 'skipped', 'running'],
-  ['s3', 'skipped', 'no-agent'],
   ['s4', 'skipped', 'no-preset'],
+  ['s6', 'skipped', 'no-agent'],
 ], 'each session reports its own outcome')
 assert.deepEqual(calls, [['1', 'standard']], 'recompose runs once, for the idle preset-bound Agent')
 
 const scoped = await (await route.fetch(request(envelope('sync.run', { sessionIds: ['s1', 's3'] })))).json()
-assert.equal(scoped.result.value.total, 2, 'sessionIds narrows the batch')
+assert.equal(scoped.result.value.total, 1, 'an archived session cannot be targeted by id either')
 
 const bad = await (await route.fetch(request(envelope('sync.bogus', {})))).json()
 assert.equal(bad.result.ok, false, 'unknown method is refused')
@@ -126,6 +132,16 @@ assert.equal(fallback.result.value.source, 'agents', 'falls back to the live Age
 assert.deepEqual(fallback.result.value.sessions.map((row) => row.sessionId).sort(), ['s1', 's2', 's4'],
   'fallback lists live Agents only')
 console.log('FALLBACK OK — source:', fallback.result.value.source)
+
+// ------------------------------------------- Host: no workspace registry
+route = undefined
+host.apply(makeCtx({ archived: null }), { skipRunning: true, settleMs: 0 })
+const noRegistry = await (await route.fetch(request(envelope('sync.preview', {})))).json()
+assert.equal(noRegistry.result.ok, true, 'preview survives a missing workspace registry')
+assert.equal(noRegistry.result.value.archivedFiltered, false, 'reports that archiving could not be filtered')
+assert.deepEqual(noRegistry.result.value.sessions.map((row) => row.sessionId), ['s1', 's2', 's3', 's4', 's6'],
+  'without the registry the archived session is shown rather than silently dropped')
+console.log('NO-REGISTRY OK — degraded to unfiltered')
 
 // ---------------------------------------------------------------- Host tool
 assert.ok(registeredTools.some((tool) => tool.name === 'preset_sync'), 'registers the preset_sync tool')
