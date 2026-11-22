@@ -18,6 +18,9 @@ window.__ModuleLoader__.load({
     const MUTED = 'var(--dsw-alias-text-secondary, rgba(128,128,128,.95))'
     const ACCENT = 'var(--dsw-alias-brand-primary, #4f7cff)'
     const SURFACE = 'var(--dsw-alias-bg-module, rgba(127,127,127,.08))'
+    const WARN = 'var(--dsw-alias-text-warning, #f5a524)'
+    const BAD = 'var(--dsw-alias-text-error, #e5484d)'
+    const OK = 'var(--dsw-alias-text-success, #30a46c)'
 
     function callRpc(connection, method, payload, signal) {
       return connection.rpc.call('/api', ENDPOINT, { method, payload }, signal)
@@ -37,16 +40,10 @@ window.__ModuleLoader__.load({
     function SyncIcon({ size }) {
       const pixels = typeof size === 'number' && size > 0 ? size : 16
       return h('svg', {
-        width: pixels,
-        height: pixels,
-        viewBox: '0 0 16 16',
-        fill: 'none',
-        stroke: 'currentColor',
-        strokeWidth: 1.3,
-        strokeLinecap: 'round',
-        strokeLinejoin: 'round',
-        'aria-hidden': true,
-        focusable: false,
+        width: pixels, height: pixels, viewBox: '0 0 16 16',
+        fill: 'none', stroke: 'currentColor', strokeWidth: 1.3,
+        strokeLinecap: 'round', strokeLinejoin: 'round',
+        'aria-hidden': true, focusable: false,
       },
         h('path', { d: 'M13.2 7.2a5.2 5.2 0 0 0-9-3.3L2.8 5.4' }),
         h('path', { d: 'M2.8 2.4v3h3' }),
@@ -54,17 +51,21 @@ window.__ModuleLoader__.load({
         h('path', { d: 'M13.2 13.6v-3h-3' }))
     }
 
-    function StatusDot({ tone }) {
-      const color = tone === 'bad' ? 'var(--dsw-alias-text-error, #e5484d)'
-        : tone === 'busy' ? 'var(--dsw-alias-text-warning, #f5a524)'
-          : 'var(--dsw-alias-text-success, #30a46c)'
+    function dot(color) {
       return h('span', {
         'aria-hidden': true,
         style: {
           display: 'inline-block', width: 6, height: 6, borderRadius: 999,
-          background: color, marginRight: 6, flex: '0 0 auto',
+          background: color, flex: '0 0 auto',
         },
       })
+    }
+
+    /** State of one session row: running → no agent → ready. */
+    function rowState(row) {
+      if (row.live === false) return { color: MUTED, label: '未打开', hint: '打开即用最新配置' }
+      if (row.running) return { color: WARN, label: '运行中', hint: '会跳过，等空闲再同步' }
+      return { color: OK, label: '空闲', hint: '可同步' }
     }
 
     function SyncPanel({ connection }) {
@@ -80,7 +81,8 @@ window.__ModuleLoader__.load({
         try {
           const value = unwrap(await callRpc(connection, 'sync.preview', {}, signal))
           if (signal?.aborted) return
-          setSessions(Array.isArray(value.sessions) ? value.sessions : [])
+          const rows = Array.isArray(value.sessions) ? value.sessions : []
+          setSessions(rows)
           setPhase('ready')
         } catch (error) {
           if (signal?.aborted) return
@@ -103,11 +105,10 @@ window.__ModuleLoader__.load({
         try {
           const value = unwrap(await callRpc(connection, 'sync.run', {}))
           setReport(value)
-          setPhase('ready')
           const failed = Number(value?.failed ?? 0)
           setMessage(failed > 0
-            ? `已同步 ${value.synced} 个会话，${failed} 个失败。`
-            : `已同步 ${value.synced} 个会话，跳过 ${value.skipped} 个。`)
+            ? `已同步 ${value.synced} 个，${failed} 个失败（见下方明细）。`
+            : `已同步 ${value.synced} 个，跳过 ${value.skipped} 个。`)
           await load()
         } catch (error) {
           setMessage(String(error?.message ?? error))
@@ -116,32 +117,33 @@ window.__ModuleLoader__.load({
         }
       }, [busy, connection, load])
 
-      const rows = sessions.map((row) => h('li', {
-        key: row.sessionId,
-        style: {
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '7px 10px', borderTop: `1px solid ${BORDER}`,
-          font: 'inherit', fontSize: 12,
-        },
-      },
-        h(StatusDot, { tone: row.status === 'running' ? 'busy' : row.synced === false ? 'bad' : 'ok' }),
-        h('code', { style: { fontFamily: 'inherits', fontSize: 12, flex: '1 1 auto', opacity: 0.9 } },
-          shortId(row.sessionId)),
-        h('span', { style: { color: MUTED, fontSize: 11, whiteSpace: 'nowrap' } },
-          row.preset === null ? '无预设' : row.preset),
-        h('span', {
-          style: {
-            color: row.status === 'running' ? 'var(--dsw-alias-text-warning, #f5a524)' : MUTED,
-            fontSize: 11, minWidth: 40, textAlign: 'right',
-          },
-        }, row.status === 'running' ? '运行中' : '空闲')))
-
+      const liveCount = sessions.filter((row) => row.live).length
       const failedRows = report?.results?.filter((row) => row.outcome === 'failed') ?? []
+
+      const rows = sessions.map((row) => {
+        const state = rowState(row)
+        return h('li', {
+          key: row.sessionId,
+          style: {
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '7px 10px', borderTop: `1px solid ${BORDER}`,
+            font: 'inherit', fontSize: 12,
+          },
+        },
+          dot(state.color),
+          h('code', { style: { fontSize: 12, flex: '1 1 auto', opacity: 0.9 } }, shortId(row.sessionId)),
+          h('span', { style: { color: row.preset === null ? MUTED : 'inherit', fontSize: 11, whiteSpace: 'nowrap' } },
+            row.preset === null ? '无预设' : row.preset),
+          h('span', {
+            title: state.hint,
+            style: { color: state.color, fontSize: 11, minWidth: 46, textAlign: 'right', whiteSpace: 'nowrap' },
+          }, state.label))
+      })
 
       return h('div', {
         style: {
           display: 'flex', flexDirection: 'column', gap: 14,
-          padding: '20px 22px', font: 'inherit', maxWidth: 720,
+          padding: '20px 22px', font: 'inherit', maxWidth: 760,
         },
       },
         h('div', null,
@@ -173,7 +175,9 @@ window.__ModuleLoader__.load({
             },
           }, '刷新列表'),
           h('span', { style: { color: MUTED, fontSize: 12 } },
-            phase === 'loading' ? '正在读取在线会话…' : `在线会话 ${sessions.length} 个`)),
+            phase === 'loading'
+              ? '正在读取会话…'
+              : `共 ${sessions.length} 个会话，${liveCount} 个开着`)),
 
         message === null ? null : h('div', {
           role: 'status',
@@ -187,18 +191,18 @@ window.__ModuleLoader__.load({
           style: { margin: 0, padding: 0, listStyle: 'none', border: `1px solid ${BORDER}`, borderRadius: 8 },
         }, failedRows.map((row) => h('li', {
           key: `fail-${row.sessionId}`,
-          style: { padding: '7px 10px', fontSize: 12, color: 'var(--dsw-alias-text-error, #e5484d)', borderTop: `1px solid ${BORDER}` },
+          style: { padding: '7px 10px', fontSize: 12, color: BAD, borderTop: `1px solid ${BORDER}` },
         }, `${shortId(row.sessionId)}：${row.reason}`))),
 
         sessions.length === 0
           ? h('p', { style: { color: MUTED, fontSize: 12, margin: 0 } },
-            phase === 'loading' ? '' : '当前没有已打开的会话。新开会话会自动使用最新配置。')
+            phase === 'loading' ? '' : '还没有会话。')
           : h('ul', {
             style: { margin: 0, padding: 0, listStyle: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, overflow: 'hidden' },
           }, rows),
 
         h('p', { style: { color: MUTED, fontSize: 11, lineHeight: 1.6, margin: 0 } },
-          '正在跑的会话会被跳过，避免打断当前回合；等它空闲后再点一次。'))
+          '「未打开」的会话没有 Agent，打开时自然装配最新配置，不需要同步。正在跑的会话会被跳过，避免打断当前回合。'))
     }
 
     return {

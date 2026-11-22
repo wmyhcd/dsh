@@ -59,10 +59,12 @@ Host 在 `/api/dsh-preset-sync` 注册一个 POST 端点，沿用 DSH 自带的�
 
 | 方法 | 作用 |
 |---|---|
-| `sync.preview` | 列出在线会话及其 preset、运行状态，不做任何修改 |
-| `sync.run` | 逐个重新绑到最新修订版；可选 `{ sessionIds: [...] }` 只同步指定会话 |
+| `sync.preview` | 列出**所有会话**及其 preset、运行状态、是否有活跃 Agent，不做任何修改 |
+| `sync.run` | 对可同步的会话逐个重新绑定；可选 `{ sessionIds: [...] }` 只同步指定会话 |
 
 返回 `{ ok: true, value }` 或 `{ ok: false, error: { code, message, details } }`。
+
+同时注册一个模型可调用的工具 `preset_sync`（`action: 'status' | 'run'`，可选 `sessionIds`），不打开面板也能同步。
 
 ## 配置
 
@@ -83,9 +85,9 @@ Host 在 `/api/dsh-preset-sync` 注册一个 POST 端点，沿用 DSH 自带的�
 ## 边界
 
 - **正在跑的会话会被跳过**；等它空闲再点一次，或把 `skipRunning` 设为 `false`。
-- **只影响已在运行的会话**。没打开的会话本来就没有 Agent，下次打开直接装配最新配置。
+- 列表用 `agentAvailable` 标注三种状态：**未打开**（没有 Agent，打开即最新，不需要同步）、**运行中**（跳过）、**空闲**（可同步）。
 - 同步会**换掉会话正在用的工具集和提示词**；已经写进历史的工具调用不改写，历史本身不动。
-- 没有记录 preset 的会话（profile 级装配）会被跳过并标记 `无预设`。
+- 没有记录 preset 的会话（profile 级装配）会被跳过并标记 `无预设`；子会话（subagent）不会出现在列表里。
 - 客户端文案目前是中文硬编码，没有走 Client locale 服务。
 
 ## 开发
